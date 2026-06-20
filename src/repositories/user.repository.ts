@@ -6,10 +6,12 @@ export async function getAll() {
 }
 
 export async function getById(id: number) {
+    console.log("Inside repository");
     const user = await prisma.user.findUnique({
         where: {
             id
         }
     });
+    console.log("User: ", user);
     return user;
 }

@@ -8,6 +8,7 @@ export async function findAllUsers(_req: Request, res: Response) {
 
 export async function findById(req: Request, res: Response) {
     const { id } = req.params;
+    console.log("Inside controller");
     const response = await findByIdService(Number(id));
     res.json(response);
 }
