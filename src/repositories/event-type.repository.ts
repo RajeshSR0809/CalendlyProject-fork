@@ -1,14 +1,6 @@
 import { prisma } from "../config/database.js";
 import { CreateEventTypeDto, UpdateEventTypeDto } from "../dtos/event-type.dto.js";
 
-
-async function  doesExistsBySlug(){
-    const doesExists = await findByHostAndSlug(1, "");
-
-    return doesExists
-}
-
-
 export async function findByHostId(hostId: number) {
     const eventTypes = await prisma.eventType.findMany({
         where: {
@@ -63,8 +55,6 @@ export async function findByHostAndSlug(hostId: number, slug: string) {
     });
     return eventType;
 }
-
-
 
 
 // /blogs/:id
