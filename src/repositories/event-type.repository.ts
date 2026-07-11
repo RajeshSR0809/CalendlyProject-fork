@@ -24,6 +24,8 @@ export async function getById(id: number) {
 }
 
 export async function create(hostId: number, data: CreateEventTypeDto & { slug: string}) {
+    console.log('Creating event type', data);
+    console.log('Host ID', hostId);
     const eventType = await prisma.eventType.create({
         data: {
             hostId,
