@@ -95,7 +95,7 @@ export function subtractWindows(windows: TimeWindow[], block: TimeWindow) : Time
 
         if(!interval.overlaps(blockInterval)) {
             result.push(window);
-            return result;
+            continue;
         }
 
         if(block.start > window.start) {
