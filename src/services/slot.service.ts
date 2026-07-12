@@ -18,11 +18,11 @@ export async function regenerateHostSlots(input: RegenerateHostSlotsInput) {
 
     const from = input.from 
         ? DateTime.fromISO(input.from, { zone: 'utc' }).startOf('day') // 2026-06-01 -> 2026-06-01T00:00:00:000Z
-        : DateTime.now().startOf('day');
+        : DateTime.now().startOf('day').toUTC(); // this should be in utc also
 
     const to = input.to 
         ? DateTime.fromISO(input.to, { zone: 'utc' }).endOf('day') // 2026-06-01 -> 2026-06-01T23:59:59:999Z
-        : from.plus({ days: SLOT_GENERATION_DAYS}).endOf('day');
+        : from.plus({ days: SLOT_GENERATION_DAYS}).endOf('day').toUTC();
 
     
     const [rules, exceptions, eventTypes, bookedSlots] = await Promise.all([
@@ -39,6 +39,7 @@ export async function regenerateHostSlots(input: RegenerateHostSlotsInput) {
             end: DateTime.fromJSDate(slot.endAt, { zone: 'utc' }),
         }
     });
+
 
     for(const eventType of eventTypes) {
 
@@ -74,7 +75,6 @@ export async function regenerateHostSlots(input: RegenerateHostSlotsInput) {
             ).filter(
                 (slot) => slot.start > DateTime.utc() && !overlapsBooked(slot, bookedWindows, eventType.bufferBeforeMinutes, eventType.bufferAfterMinutes)
             ); // slots filtered to exclude past slots and slots that overlap with booked slots
-
             // I dont like this query too much.
             for(const slot of slots) {
                 const startAt = slot.start.toUTC().toJSDate();
