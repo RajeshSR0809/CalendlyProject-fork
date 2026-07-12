@@ -9,8 +9,9 @@ import {
     markSlotBookedIfAvailable,
 } from "../repositories/slot.repository.js";
 import { badRequest, notFound } from "../utils/api-error.js";
-import type { Slot } from "../../generated/prisma/client.js";
-import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
+import type { Booking, Slot } from "../../generated/prisma/client.js";
+import { startRegenerateHostSlotsWorkflow, startSendBookingConfirmationEmailWorkflow } from "../temporal/client.js";
+import { sendBookingConfirmationEmailWorkflow } from "../temporal/workflows/booking-notification.workflow.js";
 
 
 /**
@@ -60,6 +61,17 @@ function formatBookingResponse(booking: {
     };
 }
 
+async function postBookingActions(hostId: number, booking: {
+    id: number;
+    status: string;
+    slot: { startAt: Date; endAt: Date };
+}) {
+    await triggerSlotRegen(hostId, booking.slot.startAt);
+    await startSendBookingConfirmationEmailWorkflow(booking.id);
+
+    return formatBookingResponse(booking)
+}
+
 export async function createBookingOptimistically(userId: number, dto: CreateBookingDto) {
     const booking = await prisma.$transaction(async (tx) => {
         const slot = validateSlotForBooking(await findSlotById(dto.slotId, tx));
@@ -83,9 +95,7 @@ export async function createBookingOptimistically(userId: number, dto: CreateBoo
         );
     });
 
-    await triggerSlotRegen(userId, booking.slot.startAt);
-
-    return formatBookingResponse(booking);
+    return postBookingActions(userId, booking);
 }
 
 export async function createBookingPessimistically(userId: number, dto: CreateBookingDto) {
@@ -113,9 +123,7 @@ export async function createBookingPessimistically(userId: number, dto: CreateBo
         );
     });
 
-    await triggerSlotRegen(userId, booking.slot.startAt);
-
-    return formatBookingResponse(booking);
+    return postBookingActions(userId, booking);
 }
 
 function formatBookingListItem(booking: {
